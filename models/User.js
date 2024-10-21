@@ -8,12 +8,12 @@ const userSchema = Schema({
 },{timestamps:true});
 
 userSchema.methods.toJSON = function() {
-    const obj = this._doc
-    delete obj.password
-    delete obj.__v
-    delete obj.updateAt
-    delete obj.createAt
-    return obj
+    const obj = this._doc;
+    delete obj.password;
+    delete obj.__v;
+    delete obj.updateAt;
+    delete obj.createAt;
+    return obj;
 };
 
 const User = mongoose.model("User", userSchema);

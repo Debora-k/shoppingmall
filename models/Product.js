@@ -13,11 +13,11 @@ const productSchema = Schema({
 },{timestamps:true});
 
 productSchema.methods.toJSON = function() {
-    const obj = this._doc
-    delete obj.__v
-    delete obj.updateAt
-    delete obj.createAt
-    return obj
+    const obj = this._doc;
+    delete obj.__v;
+    delete obj.updateAt;
+    delete obj.createAt;
+    return obj;
 };
 
 const Product = mongoose.model("Product", productSchema);
