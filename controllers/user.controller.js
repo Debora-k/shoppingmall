@@ -18,7 +18,7 @@ userController.createUser = async(req, res) => {
         return res.status(200).json({status:"success"});
 
     } catch(error) {
-        res.status(400).json({status:"failed", error: error.message});
+        res.status(400).json({status:"failed", error: "Something went wrong. Try sign up again"});
     }
 };
 
@@ -31,7 +31,7 @@ userController.getUser = async(req, res) => {
         }
         throw new Error("Invalid token");
     } catch(error){
-        res.status(400).json({status:"error", error: error.message});
+        res.status(400).json({status:"error", error: "Something went wrong. Try again"});
     }
 };
 

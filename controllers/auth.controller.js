@@ -21,7 +21,7 @@ authController.loginWithEmail = async (req,res) => {
             throw new Error("This user doesn't exist!!");
         }
     }catch(error){
-        res.status(400).json({status:"failed", error:error.message});
+        res.status(400).json({status:"failed", error:"Oops, something went wrong! Try login again."});
     }
 };
 
@@ -38,7 +38,7 @@ authController.authenticate = async(req,res, next) => {
         });
         next(); //userController.getUser
     }catch(error){
-        res.status(400).json({status:"failed", error:error.message});
+        res.status(400).json({status:"failed", error:"Something went wrong. Try again."});
     }
 };
 
@@ -49,7 +49,7 @@ authController.checkAdminPermission = async(req,res,next)=> {
         if(user.level !== "admin") throw new Error("No permission!");
         next();
     } catch(error){
-        res.status(400).json({status:"failed", error:error.mesage});
+        res.status(400).json({status:"failed", error:"You are not allowed to check out this page."});
     }
 };
 

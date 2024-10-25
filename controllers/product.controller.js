@@ -18,7 +18,16 @@ productController.createProduct = async(req,res) => {
         await product.save();
         res.status(200).json({status:"success", product});
     } catch(error) {
-        res.status(400).json({status:"failed", error:error.message});
+        res.status(400).json({status:"failed", error:"Failed to create the product. Try again."});
+    }
+};
+
+productController.getProducts = async(req,res) => {
+    try{
+        const products = await Product.find({});
+        res.status(200).json({status:"success", data:products});
+    }catch(error){
+        res.status(400).json({status:"failed", error:"Something went wrong! Please refresh the page."});
     }
 };
 
