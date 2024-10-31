@@ -5,6 +5,9 @@ const productController = {};
 productController.createProduct = async(req,res) => {
     try{
         const {sku,name,size,image,category,description,price,stock,status}= req.body;
+        if(price <= 0) throw new Error("Price cannot be zero or negative");
+        if(description.trim()==="") throw new Error("Description shouldn't be empty!");
+        if(name.trim()==="") throw new Error("Name shouldn't be empty!"); 
         const product = new Product({
             sku,
             name,
@@ -19,7 +22,14 @@ productController.createProduct = async(req,res) => {
         await product.save();
         res.status(200).json({status:"success", product});
     } catch(error) {
-        res.status(400).json({status:"failed", error:"Failed to create the product. Try again."});
+        if (error.message === "Price cannot be zero or negative" || 
+            error.message=== "Description shouldn't be empty!" || 
+            error.message==="Name shouldn't be empty!" 
+        ) {
+            res.status(400).json({status:"failed", error:error.message});
+        }else {
+            res.status(400).json({status:"failed", error:error});
+        }
     }
 };
 
@@ -35,7 +45,7 @@ productController.getProducts = async(req,res) => {
             { 
                 isDeleted: false 
             }
-        let query = Product.find(condition).sort({sku:1});
+        let query = Product.find(condition).sort({createdAt:-1});
         let response = {status:"success"};
         if(page){
             // PAGE_SIZE is for counting items per page 
@@ -61,7 +71,10 @@ productController.updateProduct = async(req,res) => {
     try{
         const productId = req.params.id; //from product.api
         const {sku, name, size, image, price, description, category, stock, status} = req.body;
-
+        if(price <= 0) throw new Error("Price cannot be zero or negative");
+        if(description.trim()==="") throw new Error("Description shouldn't be empty!");
+        if(name.trim()==="") throw new Error("Name shouldn't be empty!"); 
+        
         const product = await Product.findByIdAndUpdate(
             {_id:productId},
             {sku, name, size, image, price, description, category, stock, status},
@@ -70,7 +83,13 @@ productController.updateProduct = async(req,res) => {
         if(!product) throw new Error("The item doesn't exist.");
         res.status(200).json({status:"success", data:product});
     }catch(error){
-        res.status(400).json({status:"failed", error:"Something went wrong! Please refresh the page."});
+        if (error.message === "Price cannot be zero or negative" || 
+            error.message=== "Description shouldn't be empty!" || 
+            error.message==="Name shouldn't be empty!" ) {
+            res.status(400).json({status:"failed", error:error.message});
+        } else {
+            res.status(400).json({status:"failed", error:error});
+        }
     }
 };
 
