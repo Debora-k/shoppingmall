@@ -8,6 +8,9 @@ productController.createProduct = async(req,res) => {
         if(price <= 0) throw new Error("Price cannot be zero or negative");
         if(description.trim()==="") throw new Error("Description shouldn't be empty!");
         if(name.trim()==="") throw new Error("Name shouldn't be empty!"); 
+        for(const size in stock){
+            if(stock[size] < 0) throw new Error("Stock cannot be negative");
+        }
         const product = new Product({
             sku,
             name,
@@ -24,7 +27,8 @@ productController.createProduct = async(req,res) => {
     } catch(error) {
         if (error.message === "Price cannot be zero or negative" || 
             error.message=== "Description shouldn't be empty!" || 
-            error.message==="Name shouldn't be empty!" 
+            error.message==="Name shouldn't be empty!" ||
+            error.message==="Stock cannot be negative"
         ) {
             res.status(400).json({status:"failed", error:error.message});
         }else {
@@ -49,6 +53,7 @@ productController.getProducts = async(req,res) => {
         let response = {status:"success"};
         if(page){
             // PAGE_SIZE is for counting items per page 
+            console.log("page here", page);
             query.skip((page-1)*PAGE_SIZE).limit(PAGE_SIZE);
 
             //최종 몇 페이지
@@ -74,7 +79,11 @@ productController.updateProduct = async(req,res) => {
         if(price <= 0) throw new Error("Price cannot be zero or negative");
         if(description.trim()==="") throw new Error("Description shouldn't be empty!");
         if(name.trim()==="") throw new Error("Name shouldn't be empty!"); 
+        for(const size in stock){
+            if(stock[size] < 0) throw new Error("Stock cannot be negative");
+        }
         
+
         const product = await Product.findByIdAndUpdate(
             {_id:productId},
             {sku, name, size, image, price, description, category, stock, status},
@@ -85,7 +94,8 @@ productController.updateProduct = async(req,res) => {
     }catch(error){
         if (error.message === "Price cannot be zero or negative" || 
             error.message=== "Description shouldn't be empty!" || 
-            error.message==="Name shouldn't be empty!" ) {
+            error.message==="Name shouldn't be empty!" ||
+            error.message==="Stock cannot be negative") {
             res.status(400).json({status:"failed", error:error.message});
         } else {
             res.status(400).json({status:"failed", error:error});
@@ -116,6 +126,42 @@ productController.getProductById = async (req,res) => {
     }catch(error){
         res.status(400).json({status:"failed", error:"Something went wrong! Please refresh the page."});
     }
-}
+};
+
+productController.checkStock= async(item) => {
+    //유저가 구매하려는 아이템 재고 정보 들고오기
+    const product = await Product.findById(item.productId);
+
+    //유저가 구매하려는 아이템 갯수와 재고 비교
+    if(product.stock[item.size] < item.qty) {
+        //재고가 불충분하면 불충문 메세지와함께 데이터 리턴
+        return {isVerify:false, message:`There is lack of stock of ${product.name} in ${item.size} size.`};
+    }
+    
+    //충분하다면 재고에서 갯수만큼 뺴주고 성공
+    const newStock = {...product.stock};
+    newStock[item.size] -= item.qty;
+    product.stock = newStock; 
+
+    await product.save();
+    return {isVerify:true};
+};
+
+
+productController.checkItemStock = async(orderList) => {
+    const insufficientStockItems = [] //재고가 불충분한 아이템(들)을 저장할 예정
+        //재고 확인 로직
+        await Promise.all(        
+            orderList.map(async (item)=>{
+                const stockCheck = await productController.checkStock(item);
+                if(!stockCheck.isVerify) {
+                    insufficientStockItems.push({item,message:stockCheck.message});
+                }
+                return stockCheck;
+            })
+        );
+
+    return insufficientStockItems;
+};
 
 module.exports=productController;
