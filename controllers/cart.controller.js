@@ -15,9 +15,10 @@ cartController.addItemToCart = async(req,res)=> {
         // how to check whether the item & size are already existed in the cart
         const existItem = cart.items.find((item)=>item.productId.equals(productId)&& item.size === size);
         if(existItem) {
-            throw new Error("This item is already in your cart!");
+            existItem.qty += qty;
+        } else {
+            cart.items = [...cart.items,{productId,size,qty}];
         }
-        cart.items = [...cart.items,{productId,size,qty}];
         await cart.save();
         res.status(200).json({status:"success", data:cart, cartItemQty:cart.items.length});
     } catch(error){
