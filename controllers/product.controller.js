@@ -133,6 +133,9 @@ productController.checkStock= async(item) => {
     const product = await Product.findById(item.productId);
 
     //유저가 구매하려는 아이템 갯수와 재고 비교
+    console.log(product.stock[item.size], "product stock here");
+    console.log(item.qty, "qty is here");
+    console.log(item.productId, "id is here");
     if(product.stock[item.size] < item.qty) {
         //재고가 불충분하면 불충문 메세지와함께 데이터 리턴
         return {isVerify:false, message:`There is lack of stock of ${product.name} in ${item.size} size.`};

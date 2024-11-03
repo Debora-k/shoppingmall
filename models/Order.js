@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const User = require("./User");
 const Product = require("./Product");
+const Cart = require("./Cart");
 
 const orderSchema = Schema({
     orderNum:{type:String},
@@ -24,6 +25,12 @@ orderSchema.methods.toJSON = function() {
     delete obj.updateAt;
     return obj;
 };
+
+orderSchema.post("save", async function (){
+    const cart = await Cart.findOne({userId:this.userId});
+    cart.items = [];
+    await cart.save();
+});
 
 const Order = mongoose.model("Order", orderSchema);
 module.exports = Order;

@@ -14,7 +14,7 @@ orderController.createOrder = async(req,res) => {
         const insufficientStockItems = await productController.checkItemStock(orderList);
 
         if(insufficientStockItems.length > 0) {
-            const errorMessage = insufficientStockItems.reduce((total,item)=> total += item.mesage, "");
+            const errorMessage = insufficientStockItems.reduce((total,item)=> total += item.message, "");
             throw new Error(errorMessage);
         }
         
