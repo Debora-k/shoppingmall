@@ -1,6 +1,7 @@
 const Order = require("../models/Order");
 const { randomStringGenerator } = require("../utils/randomStringGenerator");
 const productController = require("./product.controller");
+const PAGE_SIZE = 10;
 const orderController = {}
 
 
@@ -30,6 +31,79 @@ orderController.createOrder = async(req,res) => {
 
         await newOrder.save();
         res.status(200).json({status:"success",orderNum:newOrder.orderNum});
+    } catch(error){
+        return res.status(400).json({status:"failed",error:error.message});
+    }
+};
+
+orderController.getOrder = async(req,res) => {
+    try{
+        const {userId} = req;
+        let query = Order.find({userId:userId}).sort({createdAt:-1});
+        let response = {status:"success"};
+
+        const orderList = await query.exec(); 
+        response.data = orderList;
+        res.status(200).json(response);
+    }catch(error){
+        return res.status(400).json({status:"failed",error:error.message});
+    }
+};
+
+orderController.getOrderList = async(req,res) => {
+    try{
+        const {page,orderNum} =req.query;
+        const condition = orderNum ?
+            { 
+                orderNum: {$regex:orderNum, $options:"i"},
+            }:{};
+        let query = Order.find(condition).sort({createdAt:-1});
+        let response = {status:"success"};
+        if(page){
+            // PAGE_SIZE is for counting items per page 
+            console.log("page here", page);
+            query.skip((page-1)*PAGE_SIZE).limit(PAGE_SIZE);
+
+            //최종 몇 페이지
+            // 데이터가 총 몇개 있는지
+            // 데이터 총 갯수/PAGE_SIZE
+            const totalItemNum = await Order.find(condition).countDocuments();
+            const totalPageNum = Math.ceil(totalItemNum / PAGE_SIZE);
+            response.totalPageNum = totalPageNum;
+        }
+        
+        query.populate({
+            path:"items",
+            populate:{
+                path:"productId",
+                model:"Product",
+            }
+        });
+        
+        query.populate({
+            path:"userId",
+            model:"User",
+        });
+        
+        const orderList = await query.exec(); 
+        response.data = orderList;
+        
+        res.status(200).json(response);
+    } catch(error){
+        return res.status(400).json({status:"failed",error:error.message});
+    }
+};
+
+
+orderController.updateOrder = async(req,res) => {
+    try{
+        const {status} = req.body;
+        const order = await Order.findByIdAndUpdate(
+            {_id:orderId},
+            {status}
+        );
+        if(!order) throw new Error("Something went wrong!");
+        res.status(200).json({status:"success", data:status});
     } catch(error){
         return res.status(400).json({status:"failed",error:error.message});
     }
