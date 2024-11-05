@@ -11,26 +11,28 @@ orderController.createOrder = async(req,res) => {
         const {userId} = req;
         const {shipTo, contact, totalPrice, orderList} = req.body;
 
-        //재고확인하고 재고 업데이트
-        const insufficientStockItems = await productController.checkItemStock(orderList);
+        await Order.db.transaction(async function (session) {
+            //재고확인하고 재고 업데이트
+            const insufficientStockItems = await productController.checkItemStock(orderList, session);
 
-        if(insufficientStockItems.length > 0) {
-            const errorMessage = insufficientStockItems.reduce((total,item)=> total += item.message, "");
-            throw new Error(errorMessage);
-        }
-        
-        //오더를 만들기
-        const newOrder = new Order({
-            userId,
-            totalPrice,
-            shipTo,
-            contact,
-            items: orderList,
-            orderNum:randomStringGenerator()
+            if(insufficientStockItems.length > 0) {
+                const errorMessage = insufficientStockItems.reduce((total,item)=> total += item.message, "");
+                throw new Error(errorMessage);
+            }
+            
+            //오더를 만들기
+            const newOrder = new Order({
+                userId,
+                totalPrice,
+                shipTo,
+                contact,
+                items: orderList,
+                orderNum:randomStringGenerator()
+            });
+
+            await newOrder.save({ session });
+            res.status(200).json({status:"success",orderNum:newOrder.orderNum});
         });
-
-        await newOrder.save();
-        res.status(200).json({status:"success",orderNum:newOrder.orderNum});
     } catch(error){
         return res.status(400).json({status:"failed",error:error.message});
     }
@@ -61,7 +63,6 @@ orderController.getOrderList = async(req,res) => {
         let response = {status:"success"};
         if(page){
             // PAGE_SIZE is for counting items per page 
-            console.log("page here", page);
             query.skip((page-1)*PAGE_SIZE).limit(PAGE_SIZE);
 
             //최종 몇 페이지
@@ -98,9 +99,11 @@ orderController.getOrderList = async(req,res) => {
 orderController.updateOrder = async(req,res) => {
     try{
         const {status} = req.body;
+        const orderId = req.params.id;
         const order = await Order.findByIdAndUpdate(
             {_id:orderId},
-            {status}
+            {status},
+            {new:true},
         );
         if(!order) throw new Error("Something went wrong!");
         res.status(200).json({status:"success", data:status});

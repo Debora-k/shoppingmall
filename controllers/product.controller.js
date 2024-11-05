@@ -53,7 +53,6 @@ productController.getProducts = async(req,res) => {
         let response = {status:"success"};
         if(page){
             // PAGE_SIZE is for counting items per page 
-            console.log("page here", page);
             query.skip((page-1)*PAGE_SIZE).limit(PAGE_SIZE);
 
             //최종 몇 페이지
@@ -128,7 +127,7 @@ productController.getProductById = async (req,res) => {
     }
 };
 
-productController.checkStock= async(item) => {
+productController.checkStock= async(item, session) => {
     //유저가 구매하려는 아이템 재고 정보 들고오기
     const product = await Product.findById(item.productId);
 
@@ -146,17 +145,17 @@ productController.checkStock= async(item) => {
     newStock[item.size] -= item.qty;
     product.stock = newStock; 
 
-    await product.save();
+    await product.save({session});
     return {isVerify:true};
 };
 
 
-productController.checkItemStock = async(orderList) => {
+productController.checkItemStock = async(orderList, session) => {
     const insufficientStockItems = [] //재고가 불충분한 아이템(들)을 저장할 예정
         //재고 확인 로직
         await Promise.all(        
             orderList.map(async (item)=>{
-                const stockCheck = await productController.checkStock(item);
+                const stockCheck = await productController.checkStock(item, session);
                 if(!stockCheck.isVerify) {
                     insufficientStockItems.push({item,message:stockCheck.message});
                 }
