@@ -30,10 +30,12 @@ cartController.getCart = async(req,res) => {
     try{
         const {userId} = req; //from middleware
         let cart = await Cart.findOne({userId});
+
         if(!cart) {
             cart = new Cart({userId});
             await cart.save();
         }
+
         await cart.populate({
             path:"items",
             populate:{
