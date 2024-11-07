@@ -1,7 +1,7 @@
 const Order = require("../models/Order");
 const { randomStringGenerator } = require("../utils/randomStringGenerator");
 const productController = require("./product.controller");
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 3;
 const orderController = {}
 
 
