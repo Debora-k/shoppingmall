@@ -52,17 +52,12 @@ productController.getProducts = async(req,res) => {
         let query = Product.find(condition).sort({createdAt:-1});
         let response = {status:"success"};
         if(page){
-            // PAGE_SIZE is for counting items per page 
             query.skip((page-1)*PAGE_SIZE).limit(PAGE_SIZE);
-
-            //최종 몇 페이지
-            // 데이터가 총 몇개 있는지
-            // 데이터 총 갯수/PAGE_SIZE
             const totalItemNum = await Product.find(condition).countDocuments();
             const totalPageNum = Math.ceil(totalItemNum / PAGE_SIZE);
             response.totalPageNum = totalPageNum;
         }
-        const productList = await query.exec(); // 쿼리를 따로 실행시키는 방법
+        const productList = await query.exec();
         response.data = productList;
 
         res.status(200).json(response);
@@ -73,7 +68,7 @@ productController.getProducts = async(req,res) => {
 
 productController.updateProduct = async(req,res) => {
     try{
-        const productId = req.params.id; //from product.api
+        const productId = req.params.id;
         const {sku, name, size, image, price, description, category, stock, status} = req.body;
         if(price <= 0) throw new Error("Price cannot be zero or negative");
         if(description.trim()==="") throw new Error("Description shouldn't be empty!");
@@ -130,11 +125,7 @@ productController.getProductById = async (req,res) => {
 productController.checkStock= async(item, session) => {
     //유저가 구매하려는 아이템 재고 정보 들고오기
     const product = await Product.findById(item.productId);
-
     //유저가 구매하려는 아이템 갯수와 재고 비교
-    console.log(product.stock[item.size], "product stock here");
-    console.log(item.qty, "qty is here");
-    console.log(item.productId, "id is here");
     if(product.stock[item.size] < item.qty) {
         //재고가 불충분하면 불충문 메세지와함께 데이터 리턴
         return {isVerify:false, message:`There is lack of stock of ${product.name} in ${item.size} size.`};

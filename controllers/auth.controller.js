@@ -36,7 +36,6 @@ authController.loginWithGoogle = async (req,res) => {
             //audience:GOOGLE_CLIENT_ID,
         });
         const {email,name} = ticket.getPayload();
-        console.log("xxxx", email,name);
 
         let user = await User.findOne({email});
         if(!user){
